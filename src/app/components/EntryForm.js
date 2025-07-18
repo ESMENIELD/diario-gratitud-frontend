@@ -23,6 +23,8 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const pickerRef = useRef();
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     if (initialData) {
       setForm({
@@ -66,11 +68,10 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
 
       const isEditing = initialData && initialData.id;
       const endpoint = isEditing
-        ? `http://localhost:3001/api/entries/${initialData.id}`
-        : 'http://localhost:3001/api/entries';
+        ? `${API_URL}/api/entries/${initialData.id}`
+        : `${API_URL}/api/entries`;
       const method = isEditing ? 'PUT' : 'POST';
 
-      // Incluye el id explícitamente si estás editando
       const payload = isEditing
         ? { ...form, id: initialData.id }
         : form;
