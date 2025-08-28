@@ -66,15 +66,26 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
       const user = auth.currentUser;
       const token = await user.getIdToken();
 
+      // 1. Buscar el usuario en backend para obtener su user_id
+      const userRes = await fetch(`${API_URL}/api/users/${user.uid}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!userRes.ok) throw new Error('No se pudo obtener el user_id');
+      const userData = await userRes.json();
+      const user_id = userData.id; // <- este id viene de MySQL
+
+      // 2. Preparar la petición de entrada
       const isEditing = initialData && initialData.id;
       const endpoint = isEditing
         ? `${API_URL}/api/entries/${initialData.id}`
         : `${API_URL}/api/entries`;
       const method = isEditing ? 'PUT' : 'POST';
 
-      const payload = isEditing
-        ? { ...form, id: initialData.id }
-        : form;
+      const payload = {
+        ...form,
+        user_id,
+        ...(isEditing && { id: initialData.id })
+      };
 
       const response = await fetch(endpoint, {
         method,

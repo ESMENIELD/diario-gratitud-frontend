@@ -1,12 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useAuth } from '../Login/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
@@ -15,7 +13,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await login(email, pass);
-      router.push('/dashboard');
+    
     } catch (e) {
       setError(e.message);
     }

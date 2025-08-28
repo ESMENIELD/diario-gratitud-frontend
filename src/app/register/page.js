@@ -1,11 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useAuth } from '../Login/context/AuthContext';
-import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState('');
@@ -14,7 +12,6 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       await register(email, pass);
-      router.push('/dashboard');
     } catch (e) {
       setError(e.message);
     }
