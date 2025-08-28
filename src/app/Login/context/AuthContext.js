@@ -22,12 +22,13 @@ export const AuthProvider = ({ children }) => {
   const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
   const syncUserWithDB = async (user) => {
     if (!user) return;
 
     try {
       // 1. Obtener todos los usuarios de la DB
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users`);
+      const res = await fetch(`${API_URL}/users`);
       const users = await res.json();
 
       // 2. Buscar si ya existe en DB
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // 3. Si no existe → crearlo
-      const createRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+      const createRes = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
