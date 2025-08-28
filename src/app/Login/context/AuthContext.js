@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // 3. Si no existe → crearlo
-      const createRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users`, {
+      const createRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
