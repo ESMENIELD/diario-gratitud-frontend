@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       // 1. Obtener todos los usuarios de la DB
-      const res = await fetch(`${API_URL}/users`);
+      const res = await fetch(`${API_URL}/api/users`);
       const users = await res.json();
 
       // 2. Buscar si ya existe en DB
