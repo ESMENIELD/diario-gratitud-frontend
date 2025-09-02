@@ -11,6 +11,7 @@ export default function Home() {
   const router = useRouter();
 
   const [entries, setEntries] = useState([]);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,7 +28,7 @@ export default function Home() {
       const token = await user.getIdToken();
       console.log("token:", token);
       
-      const res = await fetch('http://localhost:3001/api/entries', {
+      const res = await fetch(`${API_URL}/api/entries`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -43,7 +44,7 @@ export default function Home() {
 
   const handleSave = async (form) => {
     const token = await user.getIdToken();
-    const res = await fetch('http://localhost:3001/api/entries', {
+    const res = await fetch(`${API_URL}/api/entries`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ export default function Home() {
 
   const handleUpdate = async (form) => {
     const token = await user.getIdToken();
-    const res = await fetch(`http://localhost:3001/api/entries/${form.id}`, {
+    const res = await fetch(`${API_URL}/api/entries${form.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ export default function Home() {
 
   const handleDelete = async (id) => {
     const token = await user.getIdToken();
-    await fetch(`http://localhost:3001/api/entries/${id}`, {
+    await fetch(`${API_URL}/api/entries${id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
