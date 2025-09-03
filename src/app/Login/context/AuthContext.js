@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useRouter } from 'next/navigation';
+import { useApi } from '../hooks/useApi';
 
 const googleProvider = new GoogleAuthProvider();
 const AuthContext = createContext();
@@ -21,15 +22,14 @@ export const AuthProvider = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { request } = useApi();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
   const syncUserWithDB = async (user) => {
     if (!user) return;
 
     try {
-      // 1. Obtener todos los usuarios de la DB
-      const res = await fetch(`${API_URL}/api/users`);
-      const users = await res.json();
+      // 1. Obtener todos los usuarios de la DB con token
+      const users = await request("/api/users");
 
       // 2. Buscar si ya existe en DB
       const existingUser = users.find(u => u.id === user.uid);
@@ -41,16 +41,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       // 3. Si no existe → crearlo
-      const createRes = await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const newUser = await request("/api/users", {
+        method: "POST",
         body: JSON.stringify({
-          id: user.uid,          // usamos el UID de Firebase como ID en DB
-          email: user.email
-        })
+          id: user.uid,
+          email: user.email,
+        }),
       });
 
-      const newUser = await createRes.json();
       console.log("Usuario creado en DB:", newUser);
       setDbUser(newUser);
     } catch (error) {
@@ -78,7 +76,18 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, dbUser, loading, login, loginWithGoogle, register, resetPassword, logout }}>
+    <AuthContext.Provider
+      value={{
+        firebaseUser,
+        dbUser,
+        loading,
+        login,
+        loginWithGoogle,
+        register,
+        resetPassword,
+        logout,
+      }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

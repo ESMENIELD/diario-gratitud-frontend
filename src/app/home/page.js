@@ -5,19 +5,19 @@ import EntryForm from '../components/EntryForm';
 import EntryList from '../components/EntryList';
 import DownloadPDFButton from '../components/DownloadPDFButton';
 import { useAuth } from '../Login/context/AuthContext';
+import useApi from '../hooks/useApi';
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
-
+  const api = useApi();
   const [entries, setEntries] = useState([]);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login-auth');
     }
-  }, [loading, user]);
+  }, [loading, user, router]);
 
   useEffect(() => {
     if (user) fetchEntries();
@@ -25,62 +25,46 @@ export default function Home() {
 
   const fetchEntries = async () => {
     try {
-      const token = await user.getIdToken();
-      console.log("token:", token);
-      
-      const res = await fetch(`${API_URL}/api/entries`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
+      const data = await api('/api/entries');
       setEntries(Array.isArray(data) ? data : []);
-      console.log("entradas:", data);
-      
     } catch (err) {
       console.error('Error al obtener entradas:', err);
     }
   };
 
   const handleSave = async (form) => {
-    const token = await user.getIdToken();
-    const res = await fetch(`${API_URL}/api/entries`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    });
-    const newEntry = await res.json();
-    setEntries((prev) => [newEntry, ...prev]);
+    try {
+      const newEntry = await api('/api/entries', {
+        method: 'POST',
+        body: JSON.stringify(form),
+      });
+      setEntries((prev) => [newEntry, ...prev]);
+    } catch (err) {
+      console.error('Error al guardar entrada:', err);
+    }
   };
 
   const handleUpdate = async (form) => {
-    const token = await user.getIdToken();
-    const res = await fetch(`${API_URL}/api/entries${form.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    });
-    const updatedEntry = await res.json();
-    setEntries((prev) =>
-      prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e))
-    );
+    try {
+      const updatedEntry = await api(`/api/entries/${form.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(form),
+      });
+      setEntries((prev) =>
+        prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e))
+      );
+    } catch (err) {
+      console.error('Error al actualizar entrada:', err);
+    }
   };
 
   const handleDelete = async (id) => {
-    const token = await user.getIdToken();
-    await fetch(`${API_URL}/api/entries${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await api(`/api/entries/${id}`, { method: 'DELETE' });
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error('Error al eliminar entrada:', err);
+    }
   };
 
   if (loading) return <p className="p-4">Cargando...</p>;

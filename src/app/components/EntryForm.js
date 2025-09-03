@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FaSmile } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { getAuth } from 'firebase/auth';
+import useApi from '../hooks/useApi';
 
 const defaultFrequencies = [
   { title: 'Armonía 432Hz', link: 'https://www.youtube.com/watch?v=2JvJ25DL2qI' },
@@ -23,7 +24,7 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const pickerRef = useRef();
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const api = useApi();
 
   useEffect(() => {
     if (initialData) {
@@ -64,21 +65,16 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      const token = await user.getIdToken();
 
       // 1. Buscar el usuario en backend para obtener su user_id
-      const userRes = await fetch(`${API_URL}/api/users/${user.uid}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!userRes.ok) throw new Error('No se pudo obtener el user_id');
-      const userData = await userRes.json();
-      const user_id = userData.id; // <- este id viene de MySQL
+      const userData = await api(`/api/users/${user.uid}`);
+      const user_id = userData.id;
 
-      // 2. Preparar la petición de entrada
+      // 2. Preparar payload
       const isEditing = initialData && initialData.id;
       const endpoint = isEditing
-        ? `${API_URL}/api/entries/${initialData.id}`
-        : `${API_URL}/api/entries`;
+        ? `/api/entries/${initialData.id}`
+        : `/api/entries`;
       const method = isEditing ? 'PUT' : 'POST';
 
       const payload = {
@@ -87,19 +83,13 @@ export default function EntryForm({ onSave, initialData = null, onClose }) {
         ...(isEditing && { id: initialData.id })
       };
 
-      const response = await fetch(endpoint, {
+      // 3. Guardar entrada
+      const entry = await api(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Error al guardar la entrada');
-      const entry = await response.json();
       await onSave(entry);
-
       setFeedbackMessage(isEditing ? '✅ Entrada actualizada' : '✅ Entrada guardada');
 
       if (!isEditing) {
