@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FaSmile } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { getAuth } from 'firebase/auth';
-import useApi from '../hooks/useApi';
+import useApi from '../Login/hooks/useApi';
 
 const defaultFrequencies = [
   { title: 'Armonía 432Hz', link: 'https://www.youtube.com/watch?v=2JvJ25DL2qI' },
