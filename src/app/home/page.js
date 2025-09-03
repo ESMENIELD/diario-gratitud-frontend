@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EntryForm } from '../components/EntryForm';
-import { EntryList } from '../components/EntryList';
-import { DownloadPDFButton } from '../components/DownloadPDFButton';
+import EntryForm from '../components/EntryForm';
+import EntryList from '../components/EntryList';
+import DownloadPDFButton from '../components/DownloadPDFButton';
 import { useAuth } from '../Login/context/AuthContext';
 import { useApi } from '../Login/hooks/useApi';
 
@@ -17,6 +17,7 @@ export default function Home() {
     if (!loading && !user) {
       router.push('/login-auth');
     }
+    
   }, [loading, user, router]);
 
   useEffect(() => {
