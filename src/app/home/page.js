@@ -8,21 +8,22 @@ import { useAuth } from '../Login/context/AuthContext';
 import { useApi } from '../Login/hooks/useApi';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { dbUser, loading } = useAuth();
   const router = useRouter();
   const api = useApi();
   const [entries, setEntries] = useState([]);
 
+  // Redirigir solo si loading terminó y no hay usuario en DB
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !dbUser) {
       router.push('/login-auth');
     }
-    
-  }, [loading, user, router]);
+  }, [loading, dbUser, router]);
 
+  // Cargar entradas solo si usuario está disponible
   useEffect(() => {
-    if (user) fetchEntries();
-  }, [user]);
+    if (dbUser) fetchEntries();
+  }, [dbUser]);
 
   const fetchEntries = async () => {
     try {
@@ -39,7 +40,7 @@ export default function Home() {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setEntries((prev) => [newEntry, ...prev]);
+      setEntries(prev => [newEntry, ...prev]);
     } catch (err) {
       console.error('Error al guardar entrada:', err);
     }
@@ -51,9 +52,7 @@ export default function Home() {
         method: 'PUT',
         body: JSON.stringify(form),
       });
-      setEntries((prev) =>
-        prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e))
-      );
+      setEntries(prev => prev.map(e => (e.id === updatedEntry.id ? updatedEntry : e)));
     } catch (err) {
       console.error('Error al actualizar entrada:', err);
     }
@@ -62,13 +61,14 @@ export default function Home() {
   const handleDelete = async (id) => {
     try {
       await api(`/api/entries/${id}`, { method: 'DELETE' });
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      setEntries(prev => prev.filter(e => e.id !== id));
     } catch (err) {
       console.error('Error al eliminar entrada:', err);
     }
   };
 
   if (loading) return <p className="p-4">Cargando...</p>;
+  if (!dbUser) return null; // evita renderizar antes de saber si el usuario existe
 
   return (
     <main className="p-4 max-w-4xl mx-auto">

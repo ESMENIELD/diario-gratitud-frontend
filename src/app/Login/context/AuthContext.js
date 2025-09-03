@@ -7,63 +7,48 @@ import {
   sendPasswordResetEmail,
   signOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { useRouter } from 'next/navigation';
 import { useApi } from '../hooks/useApi';
 
-const googleProvider = new GoogleAuthProvider();
 const AuthContext = createContext();
-const logout = () => signOut(auth);
+const googleProvider = new GoogleAuthProvider();
 
 export const AuthProvider = ({ children }) => {
-  const router = useRouter();
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const { request } = useApi();
 
+  // Sincronizar usuario con la base de datos
   const syncUserWithDB = async (user) => {
-    if (!user) return;
-
+    if (!user) return null;
     try {
-      // 1. Obtener todos los usuarios de la DB con token
-      const users = await request("/api/users");
-
-      // 2. Buscar si ya existe en DB
-      const existingUser = users.find(u => u.id === user.uid);
-
+      const users = await request('/api/users');
+      let existingUser = users.find(u => u.id === user.uid);
       if (existingUser) {
-        console.log("Usuario ya existe en DB:", existingUser);
         setDbUser(existingUser);
-        return;
+        return existingUser;
       }
 
-      // 3. Si no existe → crearlo
-      const newUser = await request("/api/users", {
-        method: "POST",
-        body: JSON.stringify({
-          id: user.uid,
-          email: user.email,
-        }),
+      // Crear nuevo usuario en DB si no existe
+      const newUser = await request('/api/users', {
+        method: 'POST',
+        body: JSON.stringify({ id: user.uid, email: user.email }),
       });
-
-      console.log("Usuario creado en DB:", newUser);
       setDbUser(newUser);
-    } catch (error) {
-      console.error("Error sincronizando usuario con DB:", error);
+      return newUser;
+    } catch (err) {
+      console.error('Error sincronizando usuario con DB:', err);
+      return null;
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Usuario detectado en Firebase:', user);
       setFirebaseUser(user);
-      if (user) {
-        await syncUserWithDB(user);
-        router.push('/home');
-      }
+      if (user) await syncUserWithDB(user);
       setLoading(false);
     });
 
@@ -74,6 +59,7 @@ export const AuthProvider = ({ children }) => {
   const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
   const register = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+  const logout = () => signOut(auth);
 
   return (
     <AuthContext.Provider
@@ -88,7 +74,7 @@ export const AuthProvider = ({ children }) => {
         logout,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
